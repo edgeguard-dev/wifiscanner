@@ -8,10 +8,9 @@ documentation = "https://docs.rs/wifiscanner"
 readme = "README.md"
 keywords = ["wifi","hotspots","network"]
 license = "Apache-2.0"
-
-[[bin]]
-name = "wifiscanner"
+edition = "2018"
 
 [dependencies]
 regex = "1"
+tokio = {version = "1.7.1", features = ["full"]}
 itertools = "0.10.0"

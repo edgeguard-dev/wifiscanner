@@ -98,6 +98,17 @@ impl std::error::Error for Error {}
 
 /// Returns a list of WiFi hotspots in your area.
 /// Uses `airport` on macOS and `iw` on Linux.
+/// Sync version -- async version of this
+/// method is `async_scan`.
 pub fn scan() -> Result<Vec<Wifi>> {
-    crate::sys::scan()
+    let rt = tokio::runtime::Runtime::new().expect("could not initialise runtime");
+    let f = rt.spawn(async { async_scan().await });
+    rt.block_on(f).expect("cannot scan network")
+}
+
+/// Async version of method that return a list of
+/// WiFi hotspots in your area. Uses `airport` on
+/// macOS and `iw` on Linux.
+pub async fn async_scan() -> Result<Vec<Wifi>> {
+    crate::sys::scan().await
 }
