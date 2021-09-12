@@ -1,7 +1,7 @@
 use crate::{Error, Result, Wifi};
 use std::env;
-use async_process::Command;
 use std::process::Stdio;
+use tokio::process::Command;
 
 /// Returns a list of WiFi hotspots in your area - (Linux) uses `iw`
 pub(crate) async fn scan() -> Result<Vec<Wifi>> {
@@ -15,7 +15,10 @@ pub(crate) async fn scan() -> Result<Vec<Wifi>> {
         .env(PATH_ENV, path.clone())
         .arg("dev")
         .stdout(Stdio::piped())
-        .output().await?;
+        .stderr(Stdio::piped())
+        .kill_on_drop(true)
+        .output()
+        .await?;
     let output = output.map_err(|_| Error::CommandNotFound)?;
     let data = String::from_utf8_lossy(&output.stdout);
     let interface = parse_iw_dev(&data)?;
@@ -26,7 +29,10 @@ pub(crate) async fn scan() -> Result<Vec<Wifi>> {
         .arg(interface)
         .arg("scan")
         .stdout(Stdio::piped())
-        .output().await?;
+        .stderr((Stdio::piped()))
+        .kill_on_drop(true)
+        .output()
+        .await?;
     let output = output.map_err(|_| Error::CommandNotFound)?;
     if !output.status.success() {
         return Err(Error::CommandFailed(
@@ -94,10 +100,10 @@ fn extract_value(line: &str, pattern_start: &str, pattern_end: Option<&str>) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Wifi;
     use std::fs::File;
     use std::io::Read;
     use std::path::PathBuf;
-    use crate::Wifi;
 
     #[test]
     fn should_parse_iw_dev() {

@@ -1,14 +1,16 @@
 use regex::Regex;
 
 use crate::{Error, Result, Wifi};
-use async_process::Stdio;
+use std::process::Stdio;
 
 /// Returns a list of WiFi hotspots in your area - (Windows) uses `netsh`
 pub async fn scan() -> Result<Vec<Wifi>> {
-    use async_process::Command;
+    use tokio::process::Command;
     let output = Command::new("netsh.exe")
         .args(&["wlan", "show", "networks", "mode=Bssid"])
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true)
         .output()
         .await?;
 
