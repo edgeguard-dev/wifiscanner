@@ -1,18 +1,20 @@
 use crate::{Error, Result, Wifi};
+use async_process::Stdio;
 
 /// Returns a list of WiFi hotspots in your area - (OSX/MacOS) uses `airport`
-pub(crate) fn scan() -> Result<Vec<Wifi>> {
-    use std::process::Command;
+pub(crate) async fn scan() -> Result<Vec<Wifi>> {
+    use async_process::Command;
+    // TODO: check if pipe and forked process get
+    // cleaned up in error scenarios
     let output = Command::new(
         "/System/Library/PrivateFrameworks/Apple80211.\
          framework/Versions/Current/Resources/airport",
     )
-    .arg("-s")
-    .output()
-    .map_err(|_| Error::CommandNotFound)?;
+    .arg("-s").stdout(Stdio::piped())
+    .output().await;
 
+    let output = output.map_err(|_| Error::CommandNotFound)?;
     let data = String::from_utf8_lossy(&output.stdout);
-
     parse_airport(&data)
 }
 

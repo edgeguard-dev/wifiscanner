@@ -1,9 +1,10 @@
 use crate::{Error, Result, Wifi};
 use std::env;
-use std::process::Command;
+use async_process::Command;
+use std::process::Stdio;
 
 /// Returns a list of WiFi hotspots in your area - (Linux) uses `iw`
-pub(crate) fn scan() -> Result<Vec<Wifi>> {
+pub(crate) async fn scan() -> Result<Vec<Wifi>> {
     const PATH_ENV: &'static str = "PATH";
     let path_system = "/usr/sbin:/sbin";
     let path = env::var_os(PATH_ENV).map_or(path_system.to_string(), |v| {
@@ -13,8 +14,9 @@ pub(crate) fn scan() -> Result<Vec<Wifi>> {
     let output = Command::new("iw")
         .env(PATH_ENV, path.clone())
         .arg("dev")
-        .output()
-        .map_err(|_| Error::CommandNotFound)?;
+        .stdout(Stdio::piped())
+        .output().await?;
+    let output = output.map_err(|_| Error::CommandNotFound)?;
     let data = String::from_utf8_lossy(&output.stdout);
     let interface = parse_iw_dev(&data)?;
 
@@ -23,8 +25,9 @@ pub(crate) fn scan() -> Result<Vec<Wifi>> {
         .arg("dev")
         .arg(interface)
         .arg("scan")
-        .output()
-        .map_err(|_| Error::CommandNotFound)?;
+        .stdout(Stdio::piped())
+        .output().await?;
+    let output = output.map_err(|_| Error::CommandNotFound)?;
     if !output.status.success() {
         return Err(Error::CommandFailed(
             output.status,
@@ -94,6 +97,7 @@ mod tests {
     use std::fs::File;
     use std::io::Read;
     use std::path::PathBuf;
+    use crate::Wifi;
 
     #[test]
     fn should_parse_iw_dev() {
