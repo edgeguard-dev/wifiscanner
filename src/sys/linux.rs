@@ -18,7 +18,7 @@ pub(crate) async fn scan() -> Result<Vec<Wifi>> {
         .stderr(Stdio::piped())
         .kill_on_drop(true)
         .output()
-        .await?;
+        .await;
     let output = output.map_err(|_| Error::CommandNotFound)?;
     let data = String::from_utf8_lossy(&output.stdout);
     let interface = parse_iw_dev(&data)?;
@@ -29,10 +29,10 @@ pub(crate) async fn scan() -> Result<Vec<Wifi>> {
         .arg(interface)
         .arg("scan")
         .stdout(Stdio::piped())
-        .stderr((Stdio::piped()))
+        .stderr(Stdio::piped())
         .kill_on_drop(true)
         .output()
-        .await?;
+        .await;
     let output = output.map_err(|_| Error::CommandNotFound)?;
     if !output.status.success() {
         return Err(Error::CommandFailed(
