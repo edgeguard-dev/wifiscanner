@@ -45,6 +45,7 @@ extern crate regex;
 
 mod sys;
 
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::process::ExitStatus;
 
@@ -63,7 +64,7 @@ pub enum Error {
 }
 
 /// Wifi struct used to return information about wifi hotspots
-#[derive(Debug, PartialEq, Eq, Default, Clone)]
+#[derive(Debug, PartialEq, Eq, Default, Clone, Serialize, Deserialize)]
 pub struct Wifi {
     /// mac address
     pub mac: String,
