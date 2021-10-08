@@ -16,6 +16,12 @@ pub(crate) async fn scan() -> Result<Vec<Wifi>> {
     .await;
 
     let output = output.map_err(|_| Error::CommandNotFound)?;
+    if !output.status.success() {
+        return Err(Error::CommandFailed(
+            output.status,
+            String::from_utf8_lossy(&output.stderr).to_string(),
+        ));
+    }
     let data = String::from_utf8_lossy(&output.stdout);
     parse_airport(&data)
 }
